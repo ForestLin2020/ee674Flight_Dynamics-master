@@ -1,1 +1,1 @@
-# ee674Flight_Dynamics-master
+# ee674Flight_Dynamics
