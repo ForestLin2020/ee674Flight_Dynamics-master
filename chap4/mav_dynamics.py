@@ -164,7 +164,7 @@ class mav_dynamics:
 
         wind_ss = [wn_s, we_s, wd_s]
         phi, theta, psi = Quaternion2Euler(self._state[6:10])
-        angles = [phi, theta, psi]
+        angles = phi, theta, psi
         wind_ss_b = TransformationFormInertialToBody(wind_ss, angles)
 
         wn_b = wind_ss_b[0]
@@ -190,7 +190,6 @@ class mav_dynamics:
         # compute sideslip angle
         self._beta = np.arcsin(v_r/self._Va)
 
-    #OK
     def _forces_moments(self, delta):
         """
         return the forces on the UAV based on the state, wind, and control surfaces
@@ -218,7 +217,7 @@ class mav_dynamics:
 
         Vin = MAV.V_max * delta[1]
         a = (rho * np.power(D,5) * MAV.C_Q0) / (4*np.pi**2)
-        b = (rho * np.power(D,4) * MAV.C_Q1 * Va)/(2*np.pi) + (MAV.KQ*MAV.K_V)/(MAV.R_motor)
+        b = (rho * np.power(D,4) * MAV.C_Q1 * Va)/(2*np.pi) + (MAV.KQ**2)/(MAV.R_motor)
         c = (rho * np.power(D,3) * MAV.C_Q2 * Va**2) - (MAV.KQ*Vin/MAV.R_motor) + (MAV.KQ*MAV.i0)
 
         Omaga_p = (-b + math.sqrt(b**2 - (4*a*c))) / (2*a)

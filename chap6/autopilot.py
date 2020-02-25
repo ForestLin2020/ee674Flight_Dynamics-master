@@ -26,15 +26,15 @@ class autopilot:
                         ki=AP.course_ki,
                         Ts=ts_control,
                         limit=np.radians(30))
-        self.sideslip_from_rudder = pid_control(
-                        kp=AP.sideslip_kp,
-                        ki=AP.sideslip_ki,
-                        Ts=ts_control,
-                        limit=np.radians(45))
-        # self.yaw_damper = transfer_function(
-        #                 num=np.array([[AP.yaw_damper_kp, 0]]),
-        #                 den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
-        #                 Ts=ts_control)
+        # self.sideslip_from_rudder = pid_control(
+        #                 kp=AP.sideslip_kp,
+        #                 ki=AP.sideslip_ki,
+        #                 Ts=ts_control,
+        #                 limit=np.radians(45))
+        self.yaw_damper = transfer_function(
+                        num=np.array([[AP.yaw_damper_kp, 0]]),
+                        den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
+                        Ts=ts_control)
 
         # instantiate lateral controllers
         self.pitch_from_elevator = pid_control(
@@ -55,21 +55,23 @@ class autopilot:
 
     def update(self, cmd, state):
 
+
         # lateral autopilot
-        chi_c = wrap(cmd.course_command,state.chi)
-        phi_c = self.saturate(cmd.phi_feedforward + self.course_from_roll.update(chi_c, state.chi), -np.radians(30), np.radians(30))
-        delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
-        delta_r = 0.1 # self. yaw_damper.update(state.r)
+        phi_c = self.course_from_roll.update(cmd.course_command, state.chi, reset_flag=True)    # cmd.course_command
+        delta_a = self.roll_from_aileron.update_with_rate(phi_c, state.phi, state.p)    # Controller based on chi command
+        delta_a = np.asscalar(delta_a)  # change array(list) to scalar(value)
+        delta_r = self.yaw_damper.update(state.beta)
+
 
         # longitudinal autopilot
-        h_c = self.saturate(cmd.altitude_command, state.h - AP.altitude_zone, state.h + AP.altitude_zone )
-        theta_c = self.altitude_from_pitch.update(h_c, state.h)
-        delta_e = self.pitch_from_elevator.update(theta_c, state.theta, state.q)
+        theta_c = self.altitude_from_pitch.update(cmd.altitude_command, state.h)
+        delta_e = self.pitch_from_elevator.update_with_rate(theta_c, state.theta, state.q)
+        delta_e = np.asscalar(delta_e)  # change array(list) to scalar(value)
         delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
-        delta_t = self.saturate(delta_t, 0.0, 1.0)
+
 
         # construct output and commanded states
-        delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])
+        delta = np.array([[delta_e], [delta_t], [delta_a], [delta_r]])
         self.commanded_state.h = cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = phi_c
