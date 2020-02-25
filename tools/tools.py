@@ -4,7 +4,7 @@ import numpy as np
 cos = math.cos
 sin = math.sin
 
-#OK
+
 def Quaternion2Euler(e):
 	e0 = e[0]
 	e1 = e[1]
@@ -18,7 +18,7 @@ def Quaternion2Euler(e):
 	return angles
 
 
-#OK
+
 def Euler2Quaternion(angles):	
 
 	phi = angles[0]
@@ -33,7 +33,7 @@ def Euler2Quaternion(angles):
 	e = [e0, e1, e2, e3]
 	return e
 
-#OK
+
 def TransformationFormInertialToBody(wind_s, angles):
 	wn_s = wind_s[0]
 	we_s = wind_s[1]
