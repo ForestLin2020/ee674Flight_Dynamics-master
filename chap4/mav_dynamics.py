@@ -63,7 +63,6 @@ class mav_dynamics:
         '''
         # get forces and moments acting on rigid bod
         forces_moments = self._forces_moments(delta)
-        # forces_moments[0][0] = 0.0
 
         # Integrate ODE using Runge-Kutta RK4 algorithm
         time_step = self._ts_simulation
@@ -79,6 +78,7 @@ class mav_dynamics:
         e2 = self._state.item(8)
         e3 = self._state.item(9)
         normE = np.sqrt(e0**2+e1**2+e2**2+e3**2)
+
         self._state[6][0] = self._state.item(6)/normE
         self._state[7][0] = self._state.item(7)/normE
         self._state[8][0] = self._state.item(8)/normE
@@ -120,26 +120,22 @@ class mav_dynamics:
         m = forces_moments.item(4)
         n = forces_moments.item(5)
 
-        #OK
         # position kinematics
         pn_dot = (e1**2 + e0**2 - e2**2 - e3**2) * u + 2*(e1*e2 - e3*e0) * v + 2 * (e1*e3 + e2*e0) * w
         pe_dot = 2 * (e1*e2 + e3*e0) * u + (e2**2 + e0**2 - e1**2 - e3**2) * v + 2 * (e2*e3 - e1*e0) * w
         pd_dot = 2 * (e1*e3 - e2*e0) * u + 2 * (e2*e3 + e1*e0) * v + (e3**2 + e0**2 - e1**2 - e2**2) * w
 
-        #OK
         # position dynamics
         u_dot = (r*v - q*w) + (fx / MAV.mass)
         v_dot = (p*w - r*u) + (fy / MAV.mass)
         w_dot = (q*u - p*v) + (fz / MAV.mass)
 
-        #OK
         # rotational kinematics
         e0_dot = (-p * e1 - q * e2 - r * e3) *0.5
         e1_dot = ( p * e0 + r * e2 - q * e3) *0.5
         e2_dot = ( q * e0 - r * e1 + p * e3) *0.5
         e3_dot = ( r * e0 + q * e1 - p * e2) *0.5
 
-        #OK
         L  = MAV.Jx * MAV.Jz - MAV.Jxz**2
         L1 = MAV.Jxz * (MAV.Jx - MAV.Jy + MAV.Jz) / L
         L2 = (MAV.Jz * (MAV.Jz - MAV.Jy) + MAV.Jxz**2) / L
@@ -150,7 +146,6 @@ class mav_dynamics:
         L7 = ((MAV.Jx - MAV.Jy) * MAV.Jx + MAV.Jxz**2) / L
         L8 = MAV.Jx / L
 
-        #OK
         # rotatonal dynamics
         p_dot = (L1 * p * q - L2 * q * r) + (L3 * l + L4 * n)
         q_dot = (L5 * p * r - L6 * (p ** 2 - r ** 2)) + (m / MAV.Jy)
@@ -162,8 +157,6 @@ class mav_dynamics:
         return x_dot
 
     def _update_velocity_data(self, wind=np.zeros((6,1))):
-
-
         # self.wind = wind_simulation(SIM.ts_simulation) # how can I know there are six vector come here?
         wn_s = wind.item(0)
         we_s = wind.item(1)
@@ -182,7 +175,6 @@ class mav_dynamics:
         v_w = we_b + wind.item(4)
         w_w = wd_b + wind.item(5)
 
-
         u = self._state.item(3)
         v = self._state.item(4)
         w = self._state.item(5)
@@ -190,8 +182,7 @@ class mav_dynamics:
         u_r = u - u_w
         v_r = v - v_w
         w_r = w - w_w
-        
-        #OK
+
         # compute airspeed
         self._Va = np.sqrt(u_r**2 + v_r**2 + w_r**2)
         # compute angle of attack
@@ -206,7 +197,6 @@ class mav_dynamics:
         :param delta: np.matrix(delta_e, delta_t, delta_a, delta_r)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-
 
         # F(fx,fy,fz) = Fg(x,y,z) + Fa(x,y,z) + Fp(x,y,z)
 
@@ -226,14 +216,12 @@ class mav_dynamics:
         r = self._state.item(12)
         D = MAV.D_prop
 
-        #OK
         Vin = MAV.V_max * delta[1]
         a = (rho * np.power(D,5) * MAV.C_Q0) / (4*np.pi**2)
         b = (rho * np.power(D,4) * MAV.C_Q1 * Va)/(2*np.pi) + (MAV.KQ*MAV.K_V)/(MAV.R_motor)
         c = (rho * np.power(D,3) * MAV.C_Q2 * Va**2) - (MAV.KQ*Vin/MAV.R_motor) + (MAV.KQ*MAV.i0)
 
-        #OK
-        Omaga_p = (-b + np.sqrt(b**2 - (4*a*c))) / (2*a)
+        Omaga_p = (-b + math.sqrt(b**2 - (4*a*c))) / (2*a)
         J = (2*np.pi*Va) / (Omaga_p*D)
         C_T = MAV.C_T2*J**2 + MAV.C_T1*J + MAV.C_T0
         C_Q = MAV.C_Q2*J**2 + MAV.C_Q1*J + MAV.C_Q0
@@ -249,7 +237,6 @@ class mav_dynamics:
         C_D_alpha = MAV.C_D_0 + MAV.C_D_alpha*alpha
         C_L_alpha = MAV.C_L_0 + MAV.C_L_alpha*alpha
 
-        #OK
         C_X_alpha = -C_D_alpha*cos(alpha) + C_L_alpha*sin(alpha)
         C_X_q_alpha = -MAV.C_D_q*cos(alpha) + MAV.C_L_q*sin(alpha)
         C_X_delta_e_alpha = -MAV.C_D_delta_e*cos(alpha) + MAV.C_L_delta_e*sin(alpha)
@@ -265,7 +252,6 @@ class mav_dynamics:
         C_ell_0, C_ell_beta, C_ell_p, C_ell_r, C_ell_delta_a, C_ell_delta_r = MAV.C_ell_0, MAV.C_ell_beta, MAV.C_ell_p, MAV.C_ell_r, MAV.C_ell_delta_a, MAV.C_ell_delta_r
         C_n_0, C_n_beta, C_n_p, C_n_r, C_n_delta_a, C_n_delta_r = MAV.C_n_0, MAV.C_n_beta, MAV.C_n_p, MAV.C_n_r, MAV.C_n_delta_a, MAV.C_n_delta_r
 
-        #OK
         l = (1/2)*rho*Va**2*S*(MAV.b*( C_ell_0 + C_ell_beta*beta + ((C_ell_p*MAV.b*p)/(2*Va)) + ((C_ell_r*MAV.b*r)/(2*Va)))) + (1/2)*rho*Va**2*S*(MAV.b*(C_ell_delta_a*delta[2] + C_ell_delta_r*delta[3]))
         m = (1/2)*rho*Va**2*S*(MAV.c*( MAV.C_m_0 + MAV.C_m_alpha*alpha + (MAV.C_m_q*MAV.c*q)/(2*Va))) + (1/2)*rho*Va**2*S*(MAV.c*(MAV.C_m_delta_e*delta[0]))
         n = (1/2)*rho*Va**2*S*(MAV.b*( C_n_0 + C_n_beta*beta + (C_n_p*MAV.b*p)/(2*Va) + (C_n_r*MAV.b*r)/(2*Va))) + (1/2)*rho*Va**2*S*(MAV.b*( C_n_delta_a*delta[2] + C_n_delta_r*delta[3]))

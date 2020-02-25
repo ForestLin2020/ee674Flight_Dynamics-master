@@ -46,21 +46,28 @@ print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
 
     #-------controller-------------
-    estimated_state = mav.true_state  # uses true states in the control
+    estimated_state = mav.msg_true_state  # uses true states in the control
     commands.airspeed_command = Va_command.square(sim_time)
     commands.course_command = chi_command.square(sim_time)
     commands.altitude_command = h_command.square(sim_time)
     delta, commanded_state = ctrl.update(commands, estimated_state)
+
+    delta_e = -0.2      # elevator
+    delta_t = 0.2       # throttle
+    delta_a = 0.001     # aileron
+    delta_r = 0.02      # rudder
+    delta = np.array([[delta_e, delta_t, delta_a, delta_r]]).T  # transpose to make it a column vector
+
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    mav_view.update(mav.true_state)  # plot body of MAV
-    data_view.update(mav.true_state, # true states
-                     mav.true_state, # estimated states
-                     commanded_state, # commanded states
+    mav_view.update(mav.msg_true_state)     # plot body of MAV
+    data_view.update(mav.msg_true_state,    # true states
+                     mav.msg_true_state,    # estimated states
+                     commanded_state,       # commanded states
                      SIM.ts_simulation)
     if VIDEO == True: video.update(sim_time)
 

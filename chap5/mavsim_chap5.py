@@ -10,7 +10,6 @@ import sys
 sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
-
 from chap2.mav_viewer import mav_viewer
 from chap2.video_writer import video_writer
 from chap3.data_viewer import data_viewer

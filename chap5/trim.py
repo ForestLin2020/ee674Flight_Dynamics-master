@@ -10,7 +10,7 @@ import numpy as np
 import math
 from scipy.optimize import minimize
 import parameters.aerosonde_parameters as MAV
-from tools.tools import Euler2Quaternion
+
 
 def compute_trim(mav, Va, gamma):
     # define initial state and input
@@ -65,10 +65,9 @@ def compute_trim(mav, Va, gamma):
 
 # objective function to be minimized
 def trim_objective(x, mav, Va, gamma):
-    state = x[0:13]
-    delta = x[13:17]
-    xdot = np.array([
-                     [0],   # (0)
+    state = np.array(x[0:13]).T
+    delta = np.array(x[13:17]).T
+    xdot = np.array([[0],   # (0)
                      [0],   # (1)
                      [-Va * np.sin(gamma)],   # (2)
                      [0],    # (3)
@@ -86,8 +85,6 @@ def trim_objective(x, mav, Va, gamma):
     forces_moments = mav._forces_moments(delta)
     f = mav._derivatives(state, forces_moments)
     tmp = xdot[2:13] - f[2:13]
-    # tmp = xdot - f
-
     J = np.linalg.norm(tmp)
 
     return J

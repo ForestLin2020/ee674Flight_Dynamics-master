@@ -15,6 +15,14 @@ Jxz = MAV.Jxz
 S = MAV.S_wing
 b = MAV.b
 c = MAV.c
+S_prop = MAV.S_prop
+S_wing = MAV.S_wing
+k_motor = MAV.k_motor
+kTp = MAV.kTp
+kOmega = MAV.kOmega
+e = MAV.e
+AR = MAV.AR
+
 C_p_0 = MAV.C_p_0
 C_p_beta = MAV.C_p_beta
 C_p_p = MAV.C_p_p
@@ -70,15 +78,19 @@ epsilon = MAV.epsilon
 ######################################################################################
 a_phi_1 = -(1/2) * (rho*Va**2*S*b*C_p_p*b)/(2*Va)
 a_phi_2 =  (1/2) * (rho*Va**2*S*b*C_p_delta_a)
+
 W_chi = 20      #  outer loop bigger than inner loop more than twice
 Vg = 20         # groundspeed ?? depend on me?? is there have any range?
 Wn_theta = np.sqrt(3.0*a_phi_2)
 W_n_chi = Wn_theta / W_chi
 K_i_chi = (W_n_chi**2 * Vg) / gravity # 1.constant >> change Kp ??? 2.how to set up value in simulink
 
+
+
 print('a_phi_1 = ', a_phi_1)
 print('a_phi_2 = ', a_phi_2)
 print('K_i_chi = ', K_i_chi)
+print('Wn_theta = ', Wn_theta)
 
 
 
@@ -101,4 +113,15 @@ print('a_theta_3 = ', a_theta_3)
 print('K_theta_DC = ', K_theta_DC)
 print('Wn_theta = ', Wn_theta)
 print('Wn_h = ', Wn_h)
-print('ki_h = ', ki_h) # 1.constants value >> change kp???   2.how to set up value in simulink
+print('ki_h = ', ki_h)
+
+######################################################################################
+#   Longitudinal Transfer Function - airspeed
+######################################################################################
+
+Va_star ??
+alpha_star??
+
+a_V1 = (rho*Va_star*S) * (C_D_0+C_D_alpha*alpha_star*C_D_delta_e*) / mass + rho*S_prop*C_prop*Va_star
+a_V2 =
+a_V3 = gravity
