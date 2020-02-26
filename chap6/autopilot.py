@@ -64,10 +64,12 @@ class autopilot:
 
 
         # longitudinal autopilot
-        theta_c = self.altitude_from_pitch.update(cmd.altitude_command, state.h)
+        h_c = self.saturate(cmd.altitude_command, state.h - AP.altitude_zone, state.h + AP.altitude_zone)
+        theta_c = self.altitude_from_pitch.update(h_c, state.h)
         delta_e = self.pitch_from_elevator.update_with_rate(theta_c, state.theta, state.q)
         delta_e = np.asscalar(delta_e)  # change array(list) to scalar(value)
         delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
+        delta_t = self.saturate(delta_t, 0, 1)
 
 
         # construct output and commanded states
@@ -77,6 +79,7 @@ class autopilot:
         self.commanded_state.phi = phi_c
         self.commanded_state.theta = theta_c
         self.commanded_state.chi = cmd.course_command
+
         return delta, self.commanded_state
 
     def saturate(self, input, low_limit, up_limit):
