@@ -12,9 +12,10 @@ import numpy as np
 # # s = [34,45]
 # # print(s)
 # # print(s[0])
-a = np.array([[3,4,5,6],[7,8,9,10]])
+# a = np.array([[3,4,5,6],[7,8,9,10]])
+#
+# b = np.array([5,6,7]).T
+c = np.array([[3],[4],[5],[6]])
 
-b = np.array([5,6,7]).T
-c = np.array([3,4,5,6])
-d = 15.4e+4
-print(d)
+# a = np.diag([1.0,1.0])
+print(c[0][0])
