@@ -16,5 +16,5 @@ a = np.array([[3,4,5,6],[7,8,9,10]])
 
 b = np.array([5,6,7]).T
 c = np.array([3,4,5,6])
-
-print(a.item(4))
+d = 15.4e+4
+print(d)

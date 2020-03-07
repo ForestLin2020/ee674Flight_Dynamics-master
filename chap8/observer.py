@@ -75,6 +75,7 @@ class alpha_filter:
 
 class ekf_attitude:
     # implement continous-discrete EKF to estimate roll and pitch angles
+    # uavbook P.164
     def __init__(self):
         self.Q =
         self.Q_gyro =
