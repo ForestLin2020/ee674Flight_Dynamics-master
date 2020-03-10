@@ -155,7 +155,7 @@ class ekf_attitude:
         S_inv = np.linalg.inv(self.R_accel + C @ self.P @ C.T)
 
         # for i in range(0, 3):
-        if state.chi2.sf( (y-h).T @ S_inv @ (y-h) , df=3 ) > 0.01:
+        if state.chi.sf((y-h).T @ S_inv @ (y-h), df=3) > 0.01:   # original =>   state.chi2.sf....
             L = self.P @ C.T @ S_inv
             tmp = np.eye(2) - L @ C
             self.P = tmp @ self.P @ tmp.T + L @ self.R_accel @L.T
@@ -167,6 +167,7 @@ class ekf_position:
     # implement continous-discrete EKF to estimate pn, pe, chi, Vg
     def __init__(self):
         self.Q = 1e-6 * np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        #self.R_accel = np.diag([1.0, 1.0, 1.0]) * SENSOR.accel_sigma**2
         self.R = 1e-7 * np.diag([1.0, 1.0, 1.0, 1.0])
         self.N = 5  # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
@@ -253,6 +254,18 @@ class ekf_position:
         h = self.h_pseudo(self.xhat, state)
         C = jacobian(self.h_pseudo, self.xhat, state)
         y = np.array([0, 0])
+
+        S_inv = np.linalg.inv(self.R + C @ self.P @ C.T)      # self.R_accel or self.R =>  ???????
+
+        # for i in range(0, 3):
+        if state.chi2.sf((y - h).T @ S_inv @ (y - h), df=3) > 0.01:
+            L = self.P @ C.T @ S_inv
+            tmp = np.eye(2) - L @ C
+            self.P = tmp @ self.P @ tmp.T + L @ self.R @ L.T
+            self.xhat = self.xhat + L @ (y - h)
+
+        self.accel_threshold = state.chi2.isf(q=0.01, df=3)
+
         # for i in range(0, 2):
         #     Ci =
         #     L =
@@ -270,12 +283,25 @@ class ekf_position:
             C = jacobian(self.h_gps, self.xhat, state)
             y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
 
+            S_inv = np.linalg.inv(self.R + C @ self.P @ C.T)  # self.R_accel or self.R =>  ???????
+
+            # for i in range(0, 3):
+            if state.chi2.sf((y - h).T @ S_inv @ (y - h), df=3) > 0.01:
+                L = self.P @ C.T @ S_inv
+                tmp = np.eye(2) - L @ C
+                self.P = tmp @ self.P @ tmp.T + L @ self.R @ L.T
+                self.xhat = self.xhat + L @ (y - h)
+
+            self.accel_threshold = state.chi2.isf(q=0.01, df=3)
+
+
             # for i in range(0, 4):
             #     Ci =
             #     L =
             #     self.P =
             #     self.xhat =
             # update stored GPS signals
+
             self.gps_n_old = measurement.gps_n
             self.gps_e_old = measurement.gps_e
             self.gps_Vg_old = measurement.gps_Vg
