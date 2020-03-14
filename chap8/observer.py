@@ -155,12 +155,12 @@ class ekf_attitude:
         S_inv = np.linalg.inv(self.R_accel + C @ self.P @ C.T)
 
         # for i in range(0, 3):
-        if state.chi.sf((y-h).T @ S_inv @ (y-h), df=3) > 0.01:   # original =>   state.chi2.sf....
-            L = self.P @ C.T @ S_inv
-            tmp = np.eye(2) - L @ C
-            self.P = tmp @ self.P @ tmp.T + L @ self.R_accel @L.T
-            self.xhat = self.xhat + L @ (y-h)
-        self.accel_threshold = state.chi2.isf(q=0.01, df=3)
+        # if state.chi.sf((y-h).T @ S_inv @ (y-h), df=3) > 0.01:   # original =>   state.chi2.sf....
+        L = self.P @ C.T @ S_inv
+        tmp = np.eye(2) - L @ C
+        self.P = tmp @ self.P @ tmp.T + L @ self.R_accel @L.T
+        self.xhat = self.xhat + L @ (y-h)
+        # self.accel_threshold = state.chi2.isf(q=0.01, df=3)
 
 
 class ekf_position:
@@ -168,10 +168,18 @@ class ekf_position:
     def __init__(self):
         self.Q = 1e-6 * np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         #self.R_accel = np.diag([1.0, 1.0, 1.0]) * SENSOR.accel_sigma**2
-        self.R = 1e-7 * np.diag([1.0, 1.0, 1.0, 1.0])
+        # self.R = 1e-7 * np.diag([1.0, 1.0, 1.0, 1.0])
+        self.R_gps = np.eye(4)
+        self.R_gps[0,0] = SENSOR.gps_n_sigma**2
+        self.R_gps[1,1] = SENSOR.gps_e_sigma**2
+        self.R_gps[2,2] = SENSOR.gps_Vg_sigma**2
+        self.R_gps[3,3] = SENSOR.gps_course_sigma**2
+        self.R_pseudo = np.eye(2)
+        self.R_pseudo[0,0] = 0.01
+        self.R_pseudo[1,1] = 0.01
         self.N = 5  # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
-        self.xhat = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.xhat = np.array([[0.0], [0.0], [25], [0.0], [0.0], [0.0], [0.0]])
         self.P = np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         self.gps_n_old = 9999
         self.gps_e_old = 9999
@@ -206,7 +214,7 @@ class ekf_position:
         theta = state.theta
         psi_dot = ( (q*np.sin(phi) ) / np.cos(theta)) + ( (r*np.cos(phi)) / np.cos(theta) )
         # p.38
-        _f =np.array([[Vg*np.cos(chi)],
+        _f = np.array([[Vg*np.cos(chi)],
                       [Vg*np.sin(chi)],
                       [((Va*np.cos(psi)+wn)*(-Va*psi_dot*np.sin(psi)) + (Va*np.sin(psi)+we)*(Va*psi_dot*np.cos(psi)))/Vg],
                       [(MAV.gravity*np.tan(phi)*np.cos(chi-psi))],
@@ -253,18 +261,13 @@ class ekf_position:
         # always update based on wind triangle pseudu measurement
         h = self.h_pseudo(self.xhat, state)
         C = jacobian(self.h_pseudo, self.xhat, state)
-        y = np.array([0, 0])
+        y = np.array([[0., 0.]])
+        S_inv = np.linalg.inv(self.R_pseudo + C @ self.P @ C.T)
+        L = self.P @ C.T @ S_inv
+        tmp = np.eye(7) - L @ C
+        self.P = tmp @ self.P @ tmp.T + L @ self.R_pseudo @ L.T
+        self.xhat = self.xhat + L @ (y - h)
 
-        S_inv = np.linalg.inv(self.R + C @ self.P @ C.T)      # self.R_accel or self.R =>  ???????
-
-        # for i in range(0, 3):
-        if state.chi2.sf((y - h).T @ S_inv @ (y - h), df=3) > 0.01:
-            L = self.P @ C.T @ S_inv
-            tmp = np.eye(2) - L @ C
-            self.P = tmp @ self.P @ tmp.T + L @ self.R @ L.T
-            self.xhat = self.xhat + L @ (y - h)
-
-        self.accel_threshold = state.chi2.isf(q=0.01, df=3)
 
         # for i in range(0, 2):
         #     Ci =
@@ -279,20 +282,16 @@ class ekf_position:
             or (measurement.gps_Vg != self.gps_Vg_old) \
             or (measurement.gps_course != self.gps_course_old):
 
+
             h = self.h_gps(self.xhat, state)
             C = jacobian(self.h_gps, self.xhat, state)
-            y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
+            y = np.array([[measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course]]).T
+            S_inv = np.linalg.inv(self.R_gps + C @ self.P @ C.T)
+            L = self.P @ C.T @ S_inv
+            tmp = np.eye(7) - L @ C
+            self.P = tmp @ self.P @ tmp.T + L @ self.R_gps @ L.T
+            self.xhat = self.xhat + L @ (y - h)
 
-            S_inv = np.linalg.inv(self.R + C @ self.P @ C.T)  # self.R_accel or self.R =>  ???????
-
-            # for i in range(0, 3):
-            if state.chi2.sf((y - h).T @ S_inv @ (y - h), df=3) > 0.01:
-                L = self.P @ C.T @ S_inv
-                tmp = np.eye(2) - L @ C
-                self.P = tmp @ self.P @ tmp.T + L @ self.R @ L.T
-                self.xhat = self.xhat + L @ (y - h)
-
-            self.accel_threshold = state.chi2.isf(q=0.01, df=3)
 
 
             # for i in range(0, 4):

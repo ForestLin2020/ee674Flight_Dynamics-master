@@ -67,12 +67,16 @@ while sim_time < SIM.end_time:
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)
-    if VIDEO == True: video.update(sim_time)
+    obsv.update(mav.sensors)  # sensor values
+
+    if VIDEO == True:
+        video.update(sim_time)
 
     #-------increment time-------------
     sim_time += SIM.ts_simulation
 
-if VIDEO == True: video.close()
+if VIDEO == True:
+    video.close()
 
 
 
