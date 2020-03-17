@@ -12,14 +12,13 @@ import numpy as np
 # # s = [34,45]
 # # print(s)
 # # print(s[0])
-a = np.array([[3,4,5,6],
-              [7,8,9,10]])
-#
+a = np.eye(2)*1.*10**(-9.)
 # b = np.array([5,6,7]).T
-c = np.array([[3,4,5,6]])
+c = 1e-9*np.diag([1.0, 1.0])
 
-b = np.array([[3,4,5,6],
-              [7,8,9,10]])
+# b = np.array([[3,4,5,6],
+#               [7,8,9,10]])
 # a = np.diag([1.0,1.0])
 # print(a+b)
-print(a+c)
+print('a = ', a)
+print('b = ', c)

@@ -15,6 +15,8 @@ from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
+# from chap8.observer_P import observer
+# from chap8.observer_full import observer
 from tools.signals import signals
 
 # initialize the visualization
@@ -67,7 +69,7 @@ while sim_time < SIM.end_time:
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)
-    obsv.update(mav.sensors)  # sensor values
+    # obsv.update(mav.sensors)  # sensor values
 
     if VIDEO == True:
         video.update(sim_time)
