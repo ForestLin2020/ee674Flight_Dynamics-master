@@ -14,9 +14,12 @@ from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
-from chap8.observer import observer
+# from chap8.observer import observer
+from chap8.observer_full import observer
+
 from chap10.path_follower import path_follower
 from chap11.path_manager import path_manager
+# from chap11.path_manager_mi import path_manager
 from chap11.waypoint_viewer import waypoint_viewer
 
 # initialize the visualization
@@ -65,7 +68,7 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------observer-------------
-    measurements = mav.sensors()  # get sensor measurements
+    measurements = mav.sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path manager-------------
@@ -79,11 +82,12 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    mav.update(delta, current_wind)  # propagate the MAV dynamics
+    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
+    mav.update_sensors()
 
     #-------update viewer-------------
-    waypoint_view.update(waypoints, path, mav.true_state)  # plot path and MAV
-    data_view.update(mav.true_state, # true states
+    waypoint_view.update(waypoints, path, mav.msg_true_state)  # plot path and MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)

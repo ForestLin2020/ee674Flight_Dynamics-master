@@ -53,7 +53,7 @@ class waypoint_viewer():
             self.drawMAV(state)
             if waypoints.flag_waypoints_changed==True:
                 self.drawWaypoints(waypoints, path.orbit_radius)
-            if path.flag_path_changed==True:
+            # if path.flag_path_changed==True:
                 self.drawPath(path)
 
         # update the center of the camera view to the mav location
@@ -197,18 +197,25 @@ class waypoint_viewer():
 
     def drawPath(self, path):
         red = np.array([[1., 0., 0., 1]])
-        if path.type == 'line':
+        if path.flag == 'line':
             points = self.straight_line_points(path)
-        elif path.type == 'orbit':
+        elif path.flag == 'orbit':
             points = self.orbit_points(path)
         if not self.plot_initialized:
             path_color = np.tile(red, (points.shape[0], 1))
+            # self.path = gl.GLLinePlotItem(pos=points,
+            #                               color=path_color,
+            #                               width=2,
+            #                               antialias=True,
+            #                               mode='line_strip')
+            #                               #mode='line_strip')
             self.path = gl.GLLinePlotItem(pos=points,
                                           color=path_color,
                                           width=2,
                                           antialias=True,
                                           mode='line_strip')
-                                          #mode='line_strip')
+            self.path.setData(pos=points, color=path_color)
+
             self.window.addItem(self.path)
         else:
             self.path.setData(pos=points)
